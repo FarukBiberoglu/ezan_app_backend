@@ -1,8 +1,8 @@
 import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { GetUser } from 'src/auth/decorator/get-user.decorator';
-import { UpdateLocationDto } from './dto/update-location.dto';
+import { UpdateLocationDto } from '../dto/update-location.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
-import { UserSettingsService } from './service/user-settins.service';
+import { UserSettingsService } from '../service/user-settings.service';
 
 
 @Controller('user-settings')
@@ -12,11 +12,11 @@ export class UserSettingsController {
   @UseGuards(JwtAuthGuard)
   @Post('location')
   updateLocation(
-    @GetUser('id') userId: string,
+    @GetUser() user: { userId: string },
     @Body() dto: UpdateLocationDto,
   ) {
     return this.userSettingsService.updateLocation(
-      userId,
+      user.userId,
       dto.latitude,
       dto.longitude,
     );

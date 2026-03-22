@@ -9,7 +9,7 @@ export class PrayerTimesController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  getPrayerTimes(@GetUser('id') userId: string) {
-    return this.prayerTimesService.getPrayerTimes(userId);
+  getPrayerTimes(@GetUser() user: { userId: string }) {
+    return this.prayerTimesService.getPrayerTimes(user.userId);
   }
 }

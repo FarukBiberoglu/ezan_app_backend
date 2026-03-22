@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/module/prisma.module';
 import { PrayerTimesModule } from './prayer_time/module/prayer-time-module';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { UserSettingsModule } from './user_settings/module/user-settings.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { RedisModule } from '@nestjs-modules/ioredis';
     PrayerTimesModule,
     AuthModule,
     PrismaModule,
+    UserSettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

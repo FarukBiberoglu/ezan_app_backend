@@ -14,17 +14,18 @@ export class UserSettingsService {
   async updateLocation(userId: string, latitude: number, longitude: number) {
     return this.prisma.userSettings.upsert({
       where: { userId },
-  
+
       update: {
         latitude,
         longitude,
       },
-  
+
       create: {
         userId,
         latitude,
         longitude,
         method: 13,
+        updatedAt: new Date(),
       },
     });
   }
