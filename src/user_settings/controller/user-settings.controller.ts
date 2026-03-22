@@ -2,7 +2,7 @@ import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { GetUser } from 'src/auth/decorator/get-user.decorator';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
-import { UserSettingsService } from './user-settins.service';
+import { UserSettingsService } from './service/user-settins.service';
 
 
 @Controller('user-settings')

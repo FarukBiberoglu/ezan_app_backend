@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { UserSettingsService } from './user-settins.service';
-import { UserSettingsController } from './user-settings.controller';
+import { UserSettingsService } from '../service/user-settins.service';
+import { UserSettingsController } from '../controller/user-settings.controller';
 
 
 @Module({
