@@ -1,7 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
   provider = "prisma-client"
@@ -33,4 +30,41 @@ model UserSettings {
   updatedAt DateTime @default(now()) @updatedAt
 
   user User @relation(fields: [userId], references: [id])
+}
+
+model Surah {
+  id                 Int      @id
+  name               String   
+  englishName        String
+  englishTranslation String
+  numberOfAyahs      Int
+  revelationType     String
+
+  verses Verse[]
+}
+
+
+model Verse {
+  id       Int    @id @default(autoincrement())
+  surahId  Int
+  number   Int
+  text     String
+  translation String?
+
+  surah Surah @relation(fields: [surahId], references: [id])
+}
+
+model Juz {
+  id     Int      @id
+  verses JuzVerse[]
+}
+
+model JuzVerse {
+  id       Int @id @default(autoincrement())
+  juzId    Int
+  surahId  Int
+  number   Int
+  text     String
+
+  juz Juz @relation(fields: [juzId], references: [id])
 }

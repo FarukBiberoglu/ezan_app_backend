@@ -12,4 +12,9 @@ export class PrayerTimesController {
   getPrayerTimes(@GetUser() user: { userId: string }) {
     return this.prayerTimesService.getPrayerTimes(user.userId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  getMonthly(@GetUser('id') userId: string) {
+  return this.prayerTimesService.getMonthlyPrayerTimes(userId);
+}
 }

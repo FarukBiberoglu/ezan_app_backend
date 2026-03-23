@@ -64,4 +64,56 @@ export class PrayerTimesService {
 
     return result;
   }
+
+  async getMonthlyPrayerTimes(userId: string) {
+    const settings = await this.prisma.userSettings.findUnique({
+      where: { userId },
+    });
+  
+    if (!settings || !settings.latitude || !settings.longitude) {
+      throw new NotFoundException('Location not set');
+    }
+  
+    const { latitude, longitude, method } = settings;
+  
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+  
+    const round = (num: number) => Number(num.toFixed(2));
+    const latRounded = round(latitude);
+    const lngRounded = round(longitude);
+  
+    const cacheKey = `prayer:month:${latRounded}:${lngRounded}:${method}:${month}:${year}`;
+  
+    const cached = await this.redis.get(cacheKey);
+  
+    if (cached) {
+      console.log('MONTH CACHE HIT ⚡');
+      return JSON.parse(cached);
+    }
+  
+    console.log('MONTH API CALL 🔥');
+      const url = `https://api.aladhan.com/v1/calendar?latitude=${latitude}&longitude=${longitude}&method=${method}&month=${month}&year=${year}`;
+  
+    const response = await axios.get(url);
+  
+    const data = response.data.data;
+  
+    const result = data.map((day: any) => ({
+      date: day.date.gregorian.date,
+      fajr: day.timings.Fajr,
+      dhuhr: day.timings.Dhuhr,
+      asr: day.timings.Asr,
+      maghrib: day.timings.Maghrib,
+      isha: day.timings.Isha,
+    }));
+  
+    const endOfMonth = new Date(year, month, 0, 23, 59, 59);
+    const ttl = Math.floor((endOfMonth.getTime() - now.getTime()) / 1000);
+  
+    await this.redis.set(cacheKey, JSON.stringify(result), 'EX', ttl);
+  
+    return result;
+  }
 }

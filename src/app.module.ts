@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/module/prisma.module';
 import { PrayerTimesModule } from './prayer_time/module/prayer-time-module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { UserSettingsModule } from './user_settings/module/user-settings.module';
+import { QuranModule } from './quran/module/quran-module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserSettingsModule } from './user_settings/module/user-settings.module'
     }),
     ConfigModule.forRoot({ isGlobal: true }),
     PrayerTimesModule,
+    QuranModule,
     AuthModule,
     PrismaModule,
     UserSettingsModule,
