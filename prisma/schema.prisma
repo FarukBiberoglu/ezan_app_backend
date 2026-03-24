@@ -50,6 +50,8 @@ model Verse {
   number   Int
   text     String
   translation String?
+  audioUrl    String?
+  globalNumber Int    @unique 
 
   surah Surah @relation(fields: [surahId], references: [id])
 }
@@ -67,4 +69,6 @@ model JuzVerse {
   text     String
 
   juz Juz @relation(fields: [juzId], references: [id])
+
+  @@unique([juzId, surahId, number])
 }

@@ -34,11 +34,9 @@ export class PrayerTimesService {
     const cachedData = await this.redis.get(cacheKey);
 
     if (cachedData) {
-      console.log("CACHE HIT ⚡");
       return JSON.parse(cachedData);
     }
 
-    console.log("API CALL 🔥");
     const url = `https://api.aladhan.com/v1/timings/${today}?latitude=${latitude}&longitude=${longitude}&method=${method}`;
 
     const response = await axios.get(url);
@@ -89,11 +87,9 @@ export class PrayerTimesService {
     const cached = await this.redis.get(cacheKey);
   
     if (cached) {
-      console.log('MONTH CACHE HIT ⚡');
       return JSON.parse(cached);
     }
   
-    console.log('MONTH API CALL 🔥');
       const url = `https://api.aladhan.com/v1/calendar?latitude=${latitude}&longitude=${longitude}&method=${method}&month=${month}&year=${year}`;
   
     const response = await axios.get(url);

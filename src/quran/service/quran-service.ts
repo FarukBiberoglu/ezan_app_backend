@@ -1,34 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import axios from "axios";
 import { PrismaService } from "src/prisma/service/prisma.service";
-
-export interface ApiSurah {
-  number: number;
-  name: string;
-  englishName: string;
-  englishNameTranslation: string;
-  numberOfAyahs: number;
-  revelationType: string;
-}
-export interface ApiJuz {
-  number: number;
-  ayahs: {
-    numberInSurah: number;
-    text: string;
-    surah: {
-      number: number;
-    };
-  }[];
-}
-
-export interface ApiAyah {
-  numberInSurah: number;
-  text: string;
-}
-
-export interface ApiSurahDetail extends ApiSurah {
-  ayahs: ApiAyah[];
-}
+import {
+  ApiJuz,
+  ApiSurah,
+  ApiSurahDetail,
+} from "../types/quran-api.types";
 
 
 
@@ -39,27 +16,22 @@ export class QuranService {
 
   
   async getJuz(id: number) {
-    // 🔹 DB kontrol
     const existing = await this.prisma.juz.findUnique({
       where: { id },
       include: { verses: true },
     });
   
     if (existing && existing.verses.length > 0) {
-      console.log('DB HIT 💣');
       return existing;
     }
   
-    console.log('API CALL 🔥');
   
-    // 🔹 API çağır
     const url = `https://api.alquran.cloud/v1/juz/${id}`;
   
     const response = await axios.get<{ data: ApiJuz }>(url);
   
     const juz = response.data.data;
   
-    // 🔹 Juz kaydet
     await this.prisma.juz.upsert({
       where: { id },
       update: {},
@@ -68,7 +40,6 @@ export class QuranService {
       },
     });
   
-    // 🔹 Ayetleri kaydet
     await this.prisma.juzVerse.createMany({
       data: juz.ayahs.map((a) => ({
         juzId: id,
@@ -144,6 +115,7 @@ export class QuranService {
     await this.prisma.verse.createMany({
       data: surah.ayahs.map((a) => ({
         surahId: id,
+        globalNumber: a.number,
         number: a.numberInSurah,
         text: a.text,
       })),
@@ -168,8 +140,6 @@ export class QuranService {
       return existing;
     }
 
-    // Translation endpoint'i Arapca metin donmedigi icin
-    // once ayetlerin text alanini Arapca olarak garanti altina aliriz.
     await this.getSurah(id);
 
 
@@ -209,4 +179,66 @@ export class QuranService {
       include: { verses: true },
     });
   }
+
+
+  async getAyahAudio(ayahId : number){
+    const existing = await this.prisma.verse.findUnique({
+      where: { globalNumber: ayahId },
+    });
+    if (existing?.audioUrl) {
+      console.log('DB HIT 💣');
+      return {
+        ayahId,
+        audioUrl: existing.audioUrl,
+      };
+    }
+    const url = `https://api.alquran.cloud/v1/ayah/${ayahId}/ar.alafasy`;
+
+    const response = await axios.get<{
+      data: {
+        number: number;
+        audio: string;
+      };
+    }>(url);
+
+    const audioUrl = response.data.data.audio;
+
+    await this.prisma.verse.updateMany({
+      where: { globalNumber: ayahId },
+      data: { audioUrl },
+    });
+  
+    return {
+      ayahId,
+      audioUrl,
+    };
+  }
+   
+  async searchAyahs(query: string) {
+    if (!query || query.trim().length < 2) {
+      return [];
+    }
+    const results = await this.prisma.verse.findMany({
+      where: {
+        OR: [
+          { text: { contains: query, mode: 'insensitive' } },
+          { translation: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      take: 20, 
+      orderBy: {
+        globalNumber: 'asc',
+      },
+    });
+  
+    return results.map((v) => ({
+      surahId: v.surahId,
+      ayahNumber: v.number,
+      text: v.text,
+      translation: v.translation,
+      globalNumber: v.globalNumber,
+    }));
+  }
+
+
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { QuranService } from '../service/quran-service';
 
 @Controller('quran')
@@ -11,16 +11,27 @@ export class QuranController {
   }
 
   @Get('surahs/:id')
-  getSurah(@Param('id') id: string) {
-    return this.quranService.getSurah(Number(id));
+  getSurah(@Param('id', ParseIntPipe) id: number) {
+    return this.quranService.getSurah(id);
   }
 
   @Get('surahs/:id/tr')
-  getSurahWithTranslation(@Param('id') id: string) {
-    return this.quranService.getSurahWithTranslation(Number(id));
+  getSurahWithTranslation(@Param('id', ParseIntPipe) id: number) {
+    return this.quranService.getSurahWithTranslation(id);
   }
   @Get('juz/:id')
-getJuz(@Param('id') id: string) {
-  return this.quranService.getJuz(Number(id));
-}
+  getJuz(@Param('id', ParseIntPipe) id: number) {
+    return this.quranService.getJuz(id);
+  }
+
+  @Get('ayah/:id/audio')
+  getAyahAudio(@Param('id', ParseIntPipe) id: number) {
+    return this.quranService.getAyahAudio(id);
+  }
+
+  @Get('search')
+  search(@Query('q') query: string) {
+    return this.quranService.searchAyahs(query);
+  }
+
 }
