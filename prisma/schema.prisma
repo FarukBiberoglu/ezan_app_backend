@@ -88,6 +88,8 @@ model Plan {
   endDate   DateTime
   totalDays Int
   createdAt DateTime @default(now())
+  isActive Boolean @default(false)
+
 
   user User @relation(fields: [userId], references: [id])
   days PlanDay[]

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/service/prisma.service';
 import { QuranService } from 'src/quran/service/quran-service';
 import { CreatePlanDto } from '../dto/create-plan.dto';
+import { UpdatePlanDto } from '../dto/update-plan.dto';
 
 @Injectable()
 export class PlanService {
@@ -65,21 +66,29 @@ export class PlanService {
       currentJuz = end + 1;
     }
 
-    const plan = await this.prisma.plan.create({
-      data: {
-        userId,
-        startDate,
-        endDate,
-        totalDays,
-        days: {
-          create: daysData,
+    const plan = await this.prisma.$transaction(async (tx) => {
+      await tx.plan.updateMany({
+        where: { userId },
+        data: { isActive: false },
+      });
+
+      return tx.plan.create({
+        data: {
+          userId,
+          startDate,
+          endDate,
+          totalDays,
+          isActive: true,
+          days: {
+            create: daysData,
+          },
         },
-      },
-      include: {
-        days: {
-          orderBy: { date: 'asc' },
+        include: {
+          days: {
+            orderBy: { date: 'asc' },
+          },
         },
-      },
+      });
     });
 
     return plan;
@@ -99,21 +108,23 @@ export class PlanService {
       include: {
         days: true,
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: [{ isActive: 'desc' }, { createdAt: 'desc' }],
     });
   }
 
-  async getPlanById(planId: string) {
-    return this.prisma.plan.findUnique({
-      where: { id: planId },
+  async getPlanById(planId: string, userId: string) {
+    const plan = await this.prisma.plan.findFirst({
+      where: { id: planId, userId },
       include: {
         days: {
           orderBy: { date: 'asc' },
         },
       },
     });
+    if (!plan) {
+      throw new NotFoundException('Plan bulunamadi');
+    }
+    return plan;
   }
 
   async toggleDay(planDayId: string) {
@@ -129,9 +140,12 @@ export class PlanService {
     });
   }
 
-  async getPlanDayVerses(planDayId: string) {
-    const day = await this.prisma.planDay.findUnique({
-      where: { id: planDayId },
+  async getPlanDayVerses(planDayId: string, userId: string) {
+    const day = await this.prisma.planDay.findFirst({
+      where: {
+        id: planDayId,
+        plan: { userId },
+      },
     });
 
     if (!day) {
@@ -179,5 +193,100 @@ export class PlanService {
       juzRange: `${day.startJuz}-${day.endJuz}`,
       surahs: result,
     };
+  }
+
+  async deletePlan(planId: string, userId: string) {
+    const plan = await this.prisma.plan.findFirst({
+      where: { id: planId, userId },
+    });
+
+    if (!plan) {
+      throw new NotFoundException('Plan bulunamadi');
+    }
+
+    await this.prisma.planDay.deleteMany({
+      where: { planId },
+    });
+
+    return this.prisma.plan.delete({
+      where: { id: planId },
+    });
+  }
+
+  async updatePlan(planId: string, userId: string, dto: UpdatePlanDto) {
+    const plan = await this.prisma.plan.findFirst({
+      where: { id: planId, userId },
+    });
+    if (!plan) {
+      throw new NotFoundException('Plan bulunamadi');
+    }
+    const startDate = new Date(dto.startDate);
+    const endDate = new Date(dto.endDate);
+
+    const totalDays =
+      Math.ceil(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1;
+    const base = Math.floor(30 / totalDays);
+    const extra = 30 % totalDays;
+
+    let currentJuz = 1;
+    const daysData: Array<{
+      date: Date;
+      startJuz: number;
+      endJuz: number;
+    }> = [];
+
+    for (let i = 0; i < totalDays; i++) {
+      if (currentJuz > 30) break;
+
+      let juzCount = base;
+      if (i < extra) juzCount += 1;
+
+      const start = currentJuz;
+      let end = currentJuz + juzCount - 1;
+      if (end > 30) end = 30;
+
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      daysData.push({ date, startJuz: start, endJuz: end });
+
+      currentJuz = end + 1;
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.planDay.deleteMany({ where: { planId } });
+      await tx.plan.update({
+        where: { id: planId },
+        data: { startDate, endDate, totalDays },
+      });
+      await tx.planDay.createMany({
+        data: daysData.map((d) => ({ ...d, planId })),
+      });
+      return tx.plan.findUnique({
+        where: { id: planId },
+        include: { days: { orderBy: { date: 'asc' } } },
+      });
+    });
+  }
+
+  async setActivePlan(planId: string, userId: string) {
+    const plan = await this.prisma.plan.findFirst({
+      where: { id: planId, userId },
+      select: { id: true },
+    });
+    if (!plan) {
+      throw new NotFoundException('Plan bulunamadi');
+    }
+
+    await this.prisma.plan.updateMany({
+      where: { userId },
+      data: { isActive: false },
+    });
+
+    return this.prisma.plan.update({
+      where: { id: planId },
+      data: { isActive: true },
+    });
   }
 }
