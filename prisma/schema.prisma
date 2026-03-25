@@ -1,5 +1,3 @@
-
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -9,6 +7,7 @@ datasource db {
   provider = "postgresql"
 }
 
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -17,58 +16,94 @@ model User {
   refreshToken String?
 
   settings UserSettings?
+  plans    Plan[]
 }
 
 model UserSettings {
-  id      String   @id @default(uuid())
+  id        String   @id @default(uuid())
   userId    String   @unique
   latitude  Float?
   longitude Float?
   method    Int      @default(13)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id])
 }
 
+
+
 model Surah {
-  id                 Int      @id
-  name               String   
+  id                 Int    @id
+  name               String
   englishName        String
   englishTranslation String
   numberOfAyahs      Int
   revelationType     String
 
-  verses Verse[]
+  verses    Verse[]
+  juzVerses JuzVerse[]
 }
 
-
 model Verse {
-  id       Int    @id @default(autoincrement())
-  surahId  Int
-  number   Int
-  text     String
-  translation String?
-  audioUrl    String?
-  globalNumber Int    @unique 
+  id           Int    @id @default(autoincrement())
+  surahId      Int
+  number       Int
+  text         String
+  translation  String?
+  audioUrl     String?
+  globalNumber Int    @unique
 
   surah Surah @relation(fields: [surahId], references: [id])
+
+  @@unique([surahId, number]) 
 }
 
 model Juz {
-  id     Int      @id
+  id     Int        @id
   verses JuzVerse[]
 }
 
 model JuzVerse {
-  id       Int @id @default(autoincrement())
-  juzId    Int
-  surahId  Int
-  number   Int
-  text     String
+  id      Int @id @default(autoincrement())
+  juzId   Int
+  surahId Int
+  number  Int
+  text    String
 
-  juz Juz @relation(fields: [juzId], references: [id])
+  juz   Juz   @relation(fields: [juzId], references: [id])
+  surah Surah @relation(fields: [surahId], references: [id])
 
   @@unique([juzId, surahId, number])
+  @@index([juzId])
+}
+
+
+
+model Plan {
+  id        String   @id @default(uuid())
+  userId    String
+  startDate DateTime
+  endDate   DateTime
+  totalDays Int
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  days PlanDay[]
+}
+
+model PlanDay {
+  id        String   @id @default(uuid())
+  planId    String
+  date      DateTime
+
+  startJuz  Int
+  endJuz    Int
+
+  completed Boolean @default(false)
+
+  plan Plan @relation(fields: [planId], references: [id])
+
+  @@index([planId]) 
 }

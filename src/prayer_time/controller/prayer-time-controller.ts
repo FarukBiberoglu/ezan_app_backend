@@ -15,6 +15,6 @@ export class PrayerTimesController {
 
   @UseGuards(JwtAuthGuard)
   getMonthly(@GetUser('id') userId: string) {
-  return this.prayerTimesService.getMonthlyPrayerTimes(userId);
-}
+    return this.prayerTimesService.getMonthlyPrayerTimes(userId);
+  }
 }

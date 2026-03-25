@@ -4,7 +4,6 @@ import { UpdateLocationDto } from '../dto/update-location.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { UserSettingsService } from '../service/user-settings.service';
 
-
 @Controller('user-settings')
 export class UserSettingsController {
   constructor(private readonly userSettingsService: UserSettingsService) {}

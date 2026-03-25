@@ -1,37 +1,28 @@
-import { Injectable } from "@nestjs/common";
-import axios from "axios";
-import { PrismaService } from "src/prisma/service/prisma.service";
-import {
-  ApiJuz,
-  ApiSurah,
-  ApiSurahDetail,
-} from "../types/quran-api.types";
-
-
+import { Injectable } from '@nestjs/common';
+import axios from 'axios';
+import { PrismaService } from 'src/prisma/service/prisma.service';
+import { ApiJuz, ApiSurah, ApiSurahDetail } from '../types/quran-api.types';
 
 @Injectable()
 export class QuranService {
   constructor(private prisma: PrismaService) {}
 
-
-  
   async getJuz(id: number) {
     const existing = await this.prisma.juz.findUnique({
       where: { id },
       include: { verses: true },
     });
-  
+
     if (existing && existing.verses.length > 0) {
       return existing;
     }
-  
-  
+
     const url = `https://api.alquran.cloud/v1/juz/${id}`;
-  
+
     const response = await axios.get<{ data: ApiJuz }>(url);
-  
+
     const juz = response.data.data;
-  
+
     await this.prisma.juz.upsert({
       where: { id },
       update: {},
@@ -39,7 +30,7 @@ export class QuranService {
         id: juz.number,
       },
     });
-  
+
     await this.prisma.juzVerse.createMany({
       data: juz.ayahs.map((a) => ({
         juzId: id,
@@ -49,13 +40,13 @@ export class QuranService {
       })),
       skipDuplicates: true,
     });
-  
+
     return this.prisma.juz.findUnique({
       where: { id },
       include: { verses: true },
     });
   }
-  
+
   async getSurahs() {
     const surahs = await this.prisma.surah.findMany({
       orderBy: { id: 'asc' },
@@ -65,8 +56,7 @@ export class QuranService {
       return surahs;
     }
 
-
-    const url = "https://api.alquran.cloud/v1/surah";
+    const url = 'https://api.alquran.cloud/v1/surah';
     const response = await axios.get<{ data: ApiSurah[] }>(url);
     const data = response.data.data;
 
@@ -93,7 +83,6 @@ export class QuranService {
     if (existing && existing.verses.length > 0) {
       return existing;
     }
-
 
     const url = `https://api.alquran.cloud/v1/surah/${id}`;
     const response = await axios.get<{ data: ApiSurahDetail }>(url);
@@ -142,7 +131,6 @@ export class QuranService {
 
     await this.getSurah(id);
 
-
     const url = `https://api.alquran.cloud/v1/surah/${id}/tr.diyanet`;
     const response = await axios.get<{ data: ApiSurahDetail }>(url);
     const surah = response.data.data;
@@ -180,8 +168,7 @@ export class QuranService {
     });
   }
 
-
-  async getAyahAudio(ayahId : number){
+  async getAyahAudio(ayahId: number) {
     const existing = await this.prisma.verse.findUnique({
       where: { globalNumber: ayahId },
     });
@@ -207,13 +194,13 @@ export class QuranService {
       where: { globalNumber: ayahId },
       data: { audioUrl },
     });
-  
+
     return {
       ayahId,
       audioUrl,
     };
   }
-   
+
   async searchAyahs(query: string) {
     if (!query || query.trim().length < 2) {
       return [];
@@ -225,12 +212,12 @@ export class QuranService {
           { translation: { contains: query, mode: 'insensitive' } },
         ],
       },
-      take: 20, 
+      take: 20,
       orderBy: {
         globalNumber: 'asc',
       },
     });
-  
+
     return results.map((v) => ({
       surahId: v.surahId,
       ayahNumber: v.number,
@@ -239,6 +226,4 @@ export class QuranService {
       globalNumber: v.globalNumber,
     }));
   }
-
-
 }

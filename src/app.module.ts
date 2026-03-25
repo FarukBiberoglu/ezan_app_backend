@@ -8,6 +8,7 @@ import { PrayerTimesModule } from './prayer_time/module/prayer-time-module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { UserSettingsModule } from './user_settings/module/user-settings.module';
 import { QuranModule } from './quran/module/quran-module';
+import { PlanModule } from './plan/module/plan-module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { QuranModule } from './quran/module/quran-module';
       url: 'redis://localhost:6379',
     }),
     ConfigModule.forRoot({ isGlobal: true }),
+    PlanModule,
     PrayerTimesModule,
     QuranModule,
     AuthModule,

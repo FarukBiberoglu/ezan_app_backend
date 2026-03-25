@@ -1,14 +1,14 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import axios from "axios";
-import { PrismaService } from "src/prisma/service/prisma.service";
-import Redis from "ioredis";
-import { InjectRedis } from "@nestjs-modules/ioredis";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import axios from 'axios';
+import { PrismaService } from 'src/prisma/service/prisma.service';
+import Redis from 'ioredis';
+import { InjectRedis } from '@nestjs-modules/ioredis';
 
 @Injectable()
 export class PrayerTimesService {
   constructor(
     private readonly prisma: PrismaService,
-    @InjectRedis() private readonly redis: Redis
+    @InjectRedis() private readonly redis: Redis,
   ) {}
 
   async getPrayerTimes(userId: string) {
@@ -17,12 +17,12 @@ export class PrayerTimesService {
     });
 
     if (!settings || !settings.latitude || !settings.longitude) {
-      throw new NotFoundException("Location not set");
+      throw new NotFoundException('Location not set');
     }
 
     const { latitude, longitude, method } = settings;
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split('T')[0];
 
     const round = (num: number) => Number(num.toFixed(2));
 
@@ -55,10 +55,10 @@ export class PrayerTimesService {
     const now = new Date();
     const midnight = new Date();
 
-    midnight.setHours(24, 0, 0, 0); 
+    midnight.setHours(24, 0, 0, 0);
 
     const ttl = Math.floor((midnight.getTime() - now.getTime()) / 1000);
-    await this.redis.set(cacheKey, JSON.stringify(result), "EX", ttl);
+    await this.redis.set(cacheKey, JSON.stringify(result), 'EX', ttl);
 
     return result;
   }
@@ -67,35 +67,35 @@ export class PrayerTimesService {
     const settings = await this.prisma.userSettings.findUnique({
       where: { userId },
     });
-  
+
     if (!settings || !settings.latitude || !settings.longitude) {
       throw new NotFoundException('Location not set');
     }
-  
+
     const { latitude, longitude, method } = settings;
-  
+
     const now = new Date();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
-  
+
     const round = (num: number) => Number(num.toFixed(2));
     const latRounded = round(latitude);
     const lngRounded = round(longitude);
-  
+
     const cacheKey = `prayer:month:${latRounded}:${lngRounded}:${method}:${month}:${year}`;
-  
+
     const cached = await this.redis.get(cacheKey);
-  
+
     if (cached) {
       return JSON.parse(cached);
     }
-  
-      const url = `https://api.aladhan.com/v1/calendar?latitude=${latitude}&longitude=${longitude}&method=${method}&month=${month}&year=${year}`;
-  
+
+    const url = `https://api.aladhan.com/v1/calendar?latitude=${latitude}&longitude=${longitude}&method=${method}&month=${month}&year=${year}`;
+
     const response = await axios.get(url);
-  
+
     const data = response.data.data;
-  
+
     const result = data.map((day: any) => ({
       date: day.date.gregorian.date,
       fajr: day.timings.Fajr,
@@ -104,12 +104,12 @@ export class PrayerTimesService {
       maghrib: day.timings.Maghrib,
       isha: day.timings.Isha,
     }));
-  
+
     const endOfMonth = new Date(year, month, 0, 23, 59, 59);
     const ttl = Math.floor((endOfMonth.getTime() - now.getTime()) / 1000);
-  
+
     await this.redis.set(cacheKey, JSON.stringify(result), 'EX', ttl);
-  
+
     return result;
   }
 }

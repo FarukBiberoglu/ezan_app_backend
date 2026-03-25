@@ -33,5 +33,4 @@ export class QuranController {
   search(@Query('q') query: string) {
     return this.quranService.searchAyahs(query);
   }
-
 }
