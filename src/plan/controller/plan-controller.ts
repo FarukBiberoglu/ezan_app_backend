@@ -62,4 +62,30 @@ export class PlanController {
   setActivePlan(@GetUser() user: { userId: string }, @Param('id') id: string) {
     return this.planService.setActivePlan(id, user.userId);
   }
+
+  @Get('day/:dayId/surah/:surahId')
+  getSurahVerses(
+    @GetUser() user: { userId: string },
+    @Param('dayId') dayId: string,
+    @Param('surahId') surahId: string,
+  ) {
+    return this.planService.getSurahVersesForDay(
+      dayId,
+      Number(surahId),
+      user.userId,
+    );
+  }
+
+  @Get('presets')
+  getPresets() {
+    return this.planService.getPresets();
+  }
+
+  @Post('presets/:id')
+  createFromPreset(
+    @GetUser() user: { userId: string },
+    @Param('id') id: string,
+  ) {
+    return this.planService.createFromPreset(user.userId, id);
+  }
 }
