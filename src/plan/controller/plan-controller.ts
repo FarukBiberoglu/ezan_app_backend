@@ -29,6 +29,19 @@ export class PlanController {
     return this.planService.getPlans(user.userId);
   }
 
+  @Get('presets')
+  getPresets() {
+    return this.planService.getPresets();
+  }
+
+  @Post('presets/:id')
+  createFromPreset(
+    @GetUser() user: { userId: string },
+    @Param('id') id: string,
+  ) {
+    return this.planService.createFromPreset(user.userId, id);
+  }
+
   @Get(':id')
   getPlan(@GetUser() user: { userId: string }, @Param('id') id: string) {
     return this.planService.getPlanById(id, user.userId);
@@ -74,18 +87,5 @@ export class PlanController {
       Number(surahId),
       user.userId,
     );
-  }
-
-  @Get('presets')
-  getPresets() {
-    return this.planService.getPresets();
-  }
-
-  @Post('presets/:id')
-  createFromPreset(
-    @GetUser() user: { userId: string },
-    @Param('id') id: string,
-  ) {
-    return this.planService.createFromPreset(user.userId, id);
   }
 }

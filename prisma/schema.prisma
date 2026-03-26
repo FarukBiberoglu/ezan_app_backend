@@ -100,8 +100,10 @@ model PlanDay {
   planId    String
   date      DateTime
 
-  startJuz  Int
-  endJuz    Int
+  startJuz  Int?
+  endJuz    Int?
+  startGlobalNumber Int?
+  endGlobalNumber   Int?
 
   completed Boolean @default(false)
 
