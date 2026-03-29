@@ -84,7 +84,8 @@ export const UserScalarFieldEnum = {
   provider: 'provider',
   createdAt: 'createdAt',
   refreshToken: 'refreshToken',
-  googleId: 'googleId'
+  googleId: 'googleId',
+  appleId: 'appleId'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]

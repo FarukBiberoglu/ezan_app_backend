@@ -12,7 +12,7 @@
 export const Provider = {
   LOCAL: 'LOCAL',
   GOOGLE: 'GOOGLE',
-  IOS: 'IOS'
+  APPLE: 'APPLE'
 } as const
 
 export type Provider = (typeof Provider)[keyof typeof Provider]
