@@ -5,6 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { GetUser } from './decorator/get-user.decorator';
 import { RefreshDto } from './dto/refresh.dto';
+import { GoogleSignInDto } from './dto/google-signin.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -18,6 +19,11 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('google')
+  googleSignIn(@Body() dto: GoogleSignInDto) {
+    return this.authService.loginWithGoogle(dto);
   }
 
   @UseGuards(JwtAuthGuard)

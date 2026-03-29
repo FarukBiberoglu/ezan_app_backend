@@ -7,13 +7,20 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Provider {
+  LOCAL
+  GOOGLE
+  APPLE
+}
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  password     String
-  createdAt    DateTime @default(now())
+  id           String    @id @default(uuid())
+  email        String    @unique
+  password     String?
+  provider     Provider  @default(LOCAL)
+  createdAt    DateTime  @default(now())
   refreshToken String?
+  googleId     String?   @unique
 
   settings UserSettings?
   plans    Plan[]
